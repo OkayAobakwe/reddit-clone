@@ -1,5 +1,6 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { ObjectType, Field } from "type-graphql";
+import { Post } from "./Post";
 
 @ObjectType()
 @Entity()
@@ -8,14 +9,7 @@ export class User extends BaseEntity{
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Field(() => String)
-  @CreateDateColumn()
-  createdAt: Date
-
-  @Field(() => String)
-  @UpdateDateColumn()
-  updatedAt= new Date() 
-
+  
   @Field()
   @Column({type: "text", unique: true})
   username!: string;
@@ -26,5 +20,17 @@ export class User extends BaseEntity{
   
   @Column({type: "text"})
   password!: string;
+
+  @OneToMany(() => Post, (post) => post.creator)
+  posts: Post[];
+
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt: Date
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt= new Date() 
+
 
 }

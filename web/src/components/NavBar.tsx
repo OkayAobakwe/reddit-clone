@@ -42,7 +42,7 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
     )
   }
   return (
-    <Flex bg="tomato" p={4}>
+    <Flex bg="tomato" p={4} top={0} position="sticky" zIndex={1}>
       <Box ml={"auto"}>
         {body}
       </Box>
