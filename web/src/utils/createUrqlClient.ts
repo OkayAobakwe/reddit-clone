@@ -12,6 +12,7 @@ import {
 import { pipe, tap} from "wonka";
 import Router from "next/router";
 import gql from "graphql-tag";
+import { isServer } from "./isServer";
 
 const errorExchange: Exchange = ({ forward }) => ops$ => {
   return pipe(
@@ -112,10 +113,19 @@ export const cursorPagination = (): Resolver => {
   };
 };
 
-export const createUrqlClient = (ssrExchange: any) => ({
+export const createUrqlClient = (ssrExchange: any, ctx: any) => {
+  let cookie = "";
+  if(isServer()){
+    cookie = ctx.req.headers.cookie;
+  }
+
+  return{
   url: 'http://localhost:4000/graphql',
   fetchOptions: {
     credentials: "include" as const,
+    headers: cookie ?{
+      cookie
+    }: undefined
   },
   exchanges: [dedupExchange, cacheExchange({
     keys: {
@@ -135,17 +145,22 @@ export const createUrqlClient = (ssrExchange: any) => ({
               fragment _ on Post {
                 id
                 points
+                voteStatus
               }
             `, {id: postId} as any
           );
           if(data){
-            const newPoints = (data.points as number) + value;
+            if(data.voteStatus === value){
+              return
+            }
+            const newPoints = (data.points as number) + (!data.voteStatus ? 1 : 2)*value;
             cache.writeFragment(
               gql`
                 fragment __ on Post {
                   points
+                  voteStatus
                 }
-              `, {id: postId, points: newPoints}
+              `, {id: postId, points: newPoints, voteStatus: value}
             )
           }
         },
@@ -200,4 +215,4 @@ export const createUrqlClient = (ssrExchange: any) => ({
       }
     }
   }), errorExchange, ssrExchange, fetchExchange]
-})
+}}
