@@ -38,6 +38,9 @@ const Index = () => {
                 icon={<ChevronUpIcon/>} 
                 aria-label="updoot post"
                 onClick={() => {
+                  if(post.voteStatus === 1){
+                    return;
+                  }
                   vote({
                     postId: post.id,
                     value: 1
@@ -50,6 +53,9 @@ const Index = () => {
                 icon={<ChevronDownIcon/>} 
                 aria-label="downdoot post"
                 onClick={() => {
+                  if(post.voteStatus === -1){
+                    return;
+                  }
                   vote({
                     postId: post.id,
                     value: -1
