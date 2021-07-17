@@ -128,7 +128,7 @@ export class PostResolver {
   @Query(() => Post, { nullable: true})
   post(@Arg("id", () => Int) id: number,
   ): Promise<Post | undefined> {
-    return Post.findOne(id);
+    return Post.findOne(id, {relations: ["creatorId"]});
   }
 
   @Mutation(() => Post)
@@ -162,10 +162,20 @@ export class PostResolver {
   }
 
   @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
   async deletePost(
-    @Arg("id") id: number, 
+    @Arg("id", () => Int) id: number,
+    @Ctx() {req}: MyContext,
   ): Promise<boolean> {
-    await Post.delete(id)
+    const post = await Post.findOne(id);
+    if(!post){
+      return false
+    }
+    if(post.creatorId !== req.session.userId){
+      throw new Error("not authorized!")
+    }
+    await Updoot.delete({postId: id})
+    await Post.delete({id})
     return true
   }
 }
