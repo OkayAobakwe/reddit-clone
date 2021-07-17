@@ -7,12 +7,12 @@ import {
   LoginMutation,
   RegisterMutation,
   MeDocument,
-  VoteMutationVariables
+  VoteMutationVariables,
+  DeletePostMutationVariables
 } from "../generated/graphql";
 import { pipe, tap} from "wonka";
 import Router from "next/router";
 import gql from "graphql-tag";
-import { isServer } from "./isServer";
 
 const errorExchange: Exchange = ({ forward }) => ops$ => {
   return pipe(
@@ -113,19 +113,10 @@ export const cursorPagination = (): Resolver => {
   };
 };
 
-export const createUrqlClient = (ssrExchange: any, ctx: any) => {
-  let cookie = "";
-  if(isServer()){
-    cookie = ctx.req.headers.cookie;
-  }
-
-  return{
+export const createUrqlClient = (ssrExchange: any) => ({
   url: 'http://localhost:4000/graphql',
   fetchOptions: {
     credentials: "include" as const,
-    headers: cookie ?{
-      cookie
-    }: undefined
   },
   exchanges: [dedupExchange, cacheExchange({
     keys: {
@@ -138,6 +129,9 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
     },
     updates: {
       Mutation : {
+        deletePost: (_result, args, cache, info) => {
+          cache.invalidate({__typename: "Post", id: (args as DeletePostMutationVariables).id})
+        },
         vote: (_result, args, cache, info) => {
           const {postId, value} = args as VoteMutationVariables;
           const data = cache.readFragment(
@@ -145,22 +139,17 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
               fragment _ on Post {
                 id
                 points
-                voteStatus
               }
             `, {id: postId} as any
           );
           if(data){
-            if(data.voteStatus === value){
-              return
-            }
-            const newPoints = (data.points as number) + (!data.voteStatus ? 1 : 2)*value;
+            const newPoints = (data.points as number) + value;
             cache.writeFragment(
               gql`
                 fragment __ on Post {
                   points
-                  voteStatus
                 }
-              `, {id: postId, points: newPoints, voteStatus: value}
+              `, {id: postId, points: newPoints}
             )
           }
         },
@@ -215,4 +204,4 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
       }
     }
   }), errorExchange, ssrExchange, fetchExchange]
-}}
+})
