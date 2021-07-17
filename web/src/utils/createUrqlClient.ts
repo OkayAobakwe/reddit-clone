@@ -7,7 +7,8 @@ import {
   LoginMutation,
   RegisterMutation,
   MeDocument,
-  VoteMutationVariables
+  VoteMutationVariables,
+  DeletePostMutationVariables
 } from "../generated/graphql";
 import { pipe, tap} from "wonka";
 import Router from "next/router";
@@ -138,6 +139,9 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
     },
     updates: {
       Mutation : {
+        deletePost: (_result, args, cache, info) => {
+          cache.invalidate({__typename: "Post", id: (args as DeletePostMutationVariables).id})
+        },
         vote: (_result, args, cache, info) => {
           const {postId, value} = args as VoteMutationVariables;
           const data = cache.readFragment(
