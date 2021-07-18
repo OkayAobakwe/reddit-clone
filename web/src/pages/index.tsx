@@ -1,22 +1,23 @@
 import React, { useState } from "react";
 import { withUrqlClient } from "next-urql";
 import { createUrqlClient } from "../utils/createUrqlClient";
-import { useDeletePostMutation, usePostsQuery, useVoteMutation } from "../generated/graphql";
+import { usePostsQuery, useVoteMutation, useMeQuery } from "../generated/graphql";
 import { Layout } from "../components/Layout";
 import { Link, Stack, Box, Text, Heading, Flex, Button, IconButton } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { ChevronDownIcon, ChevronUpIcon, DeleteIcon  } from "@chakra-ui/icons";
+import { ChevronDownIcon, ChevronUpIcon} from "@chakra-ui/icons";
+import { EditDeletePostButtons } from "../components/EditDeletePostButtons";
 
 const Index = () => {
   const [variables, setVariables] = useState({
     limit: 2,
     cursor: null as null | string
   })
+  const [{data: meData}] = useMeQuery()
   const [{data, fetching}] = usePostsQuery({
     variables,
   });
   const [, vote] = useVoteMutation();
-  const [, deletePost] = useDeletePostMutation();
   return (
     <Layout variant="regular">
       {!data ? (
@@ -32,6 +33,9 @@ const Index = () => {
                 icon={<ChevronUpIcon/>} 
                 aria-label="updoot post"
                 onClick={() => {
+                  if(post.voteStatus === 1){
+                    return;
+                  }
                   vote({
                     postId: post.id,
                     value: 1
@@ -44,6 +48,9 @@ const Index = () => {
                 icon={<ChevronDownIcon/>} 
                 aria-label="downdoot post"
                 onClick={() => {
+                  if(post.voteStatus === -1){
+                    return;
+                  }
                   vote({
                     postId: post.id,
                     value: -1
@@ -61,13 +68,9 @@ const Index = () => {
               <Text>posted by {post.creator.username}</Text>
               <Flex>
                 <Text mt={4} flex={1}>{post.textSnippet}</Text>
-                <IconButton
-                  icon={<DeleteIcon/>} 
-                  aria-label="Delete Post"
-                  onClick={() => {
-                    deletePost({id: post.id});
-                  }}
-                />
+                <Box ml="auto">
+                  <EditDeletePostButtons id={post.id} creatorId={post.creator.id} />
+                </Box>
               </Flex>
             </Box>
           </Flex>
