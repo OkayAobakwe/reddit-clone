@@ -10,14 +10,14 @@ import { EditDeletePostButtons } from "../components/EditDeletePostButtons";
 
 const Index = () => {
   const [variables, setVariables] = useState({
-    limit: 2,
+    limit: 4,
     cursor: null as null | string
   })
-  const [{data: meData}] = useMeQuery()
   const [{data, fetching}] = usePostsQuery({
     variables,
   });
   const [, vote] = useVoteMutation();
+
   return (
     <Layout variant="regular">
       {!data ? (
