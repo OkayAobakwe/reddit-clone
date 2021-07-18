@@ -9,12 +9,12 @@ import { UserResolver } from "./resolvers/user";
 import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
-import { MyContext } from "./types";
 import cors from "cors";
 import { createConnection } from "typeorm";
 import { User } from "./entities/User";
 import { Post } from "./entities/Post";
 import { Updoot } from "./entities/Updoot";
+import { createUserLoader } from "./utils/createUserLoader";
 
 const main = async () => {
   await createConnection({
@@ -58,7 +58,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false
     }),
-    context: ({ req, res }): MyContext => ({ req, res, redis })
+    context: ({ req, res }) => ({ req, res, redis, userLoader: createUserLoader() })
   })
 
   apolloServer.applyMiddleware({
